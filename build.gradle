@@ -40,3 +40,8 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+tasks.named('bootBuildImage') {
+	builder = "dashaun/builder:tiny"
+	environment = ["BP_JVM_VERSION" : "21"]
+}

@@ -1,5 +1,15 @@
 version: '3'
 services:
+  invoice-service:
+    image: invoice-service:0.0.1-SNAPSHOT
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://collector:4317"
+      ORDER_SERVICE_BASE_URL: "http://order-service:8080"
+    ports:
+      - "8082:8082"
+    depends_on:
+      - collector
+
   order-service:
     image: order-service:0.0.5-SNAPSHOT
     environment:
@@ -23,7 +33,7 @@ services:
       - ./docker/collector/otel-collector.yml:/etc/otelcol-contrib/otel-collector.yml
     restart: always
     ports:
-      - "4317:4317" # OTLP gRPC receiver
+      - "4317" # OTLP gRPC receiver
       - "8889" # Prometheus exporter metrics
     depends_on:
       - loki
