@@ -1,17 +1,7 @@
 version: '3'
 services:
-  invoice-service:
-    image: invoice-service:0.0.1-SNAPSHOT
-    environment:
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://collector:4317"
-      ORDER_SERVICE_BASE_URL: "http://order-service:8080"
-    ports:
-      - "8082:8082"
-    depends_on:
-      - collector
-
   order-service:
-    image: order-service:0.0.5-SNAPSHOT
+    image: order-service:0.0.6-SNAPSHOT
     environment:
       OTEL_SERVICE_NAME: "order-service"
       OTEL_RESOURCE_ATTRIBUTES: "service=order-service,env=dev"
@@ -33,7 +23,7 @@ services:
       - ./docker/collector/otel-collector.yml:/etc/otelcol-contrib/otel-collector.yml
     restart: always
     ports:
-      - "4317" # OTLP gRPC receiver
+      - "4317:4317" # OTLP gRPC receiver
       - "8889" # Prometheus exporter metrics
     depends_on:
       - loki
@@ -117,3 +107,21 @@ services:
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
+
+  kafka:
+    container_name: kafka
+    image: docker.io/bitnami/kafka:3.6
+    restart: always
+    environment:
+      # KRaft settings
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      # Listeners
+      - KAFKA_CFG_LISTENERS=CONTROLLER://:9093,INTERNAL://:9092,EXTERNAL://:29092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
+    ports:
+      - "29092:29092"
